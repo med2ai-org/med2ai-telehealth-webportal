@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Med2AI Nexus — Telehealth Portal</title>
+  <meta name="description" content="Join a secure, HIPAA-compliant telehealth consultation with your patient via Med2AI Nexus.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- JOIN SCREEN                                             -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div id="join-screen" class="screen active">
+    <div class="join-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Med2AI <span class="brand-highlight">Nexus</span></h1>
+          <p>Clinician Telehealth Portal</p>
+        </div>
+      </div>
+
+      <div class="join-card">
+        <h2>Join Consultation</h2>
+        <p class="subtitle">Enter the room code shared by your patient to start a secure video session.</p>
+
+        <div class="input-group">
+          <label for="room-code">Room Code</label>
+          <input type="text" id="room-code" placeholder="ABC123" maxlength="6" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="input-group">
+          <label for="display-name">Your Name</label>
+          <input type="text" id="display-name" placeholder="Dr. Sarah Chen" autocomplete="name">
+        </div>
+
+        <button id="join-btn" class="btn-primary" onclick="joinSession()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          Join Secure Session
+        </button>
+
+        <div class="badges">
+          <span class="badge badge-green">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            HIPAA Compliant
+          </span>
+          <span class="badge badge-purple">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            E2E Encrypted
+          </span>
+          <span class="badge badge-blue">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Low Latency
+          </span>
+        </div>
+      </div>
+
+      <p class="footer-text">Powered by Med2AI Nexus · Agora RTC · Zero-Knowledge Architecture</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- CALL SCREEN                                             -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div id="call-screen" class="screen">
+    <div class="call-container">
+      <!-- Remote video (patient) -->
+      <div id="remote-video-container" class="video-main">
+        <div id="remote-placeholder" class="video-placeholder">
+          <div class="placeholder-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <p>Waiting for patient to connect...</p>
+          <span id="room-code-display" class="room-code-badge"></span>
+        </div>
+      </div>
+
+      <!-- Local video (clinician) -->
+      <div id="local-video-container" class="video-self"></div>
+
+      <!-- Call info bar -->
+      <div class="call-info-bar">
+        <div class="call-info-left">
+          <span class="call-status" id="call-status">● Connecting</span>
+          <span class="call-timer" id="call-timer">00:00</span>
+        </div>
+        <div class="call-info-right">
+          <span class="room-label">Room: <strong id="room-label-code"></strong></span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="call-controls">
+        <button class="ctrl-btn" id="mic-btn" onclick="toggleMic()" title="Toggle Microphone">
+          <svg id="mic-icon-on" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+          <svg id="mic-icon-off" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <line x1="1" y1="1" x2="23" y2="23"/>
+            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .72-.11 1.43-.3 2.1"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <button class="ctrl-btn" id="cam-btn" onclick="toggleCamera()" title="Toggle Camera">
+          <svg id="cam-icon-on" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          <svg id="cam-icon-off" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <path d="M16.24 7.76A6 6 0 0 1 19.5 12"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+            <path d="M16.5 16.5l6.5 .5V7l-6 4"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </button>
+        <button class="ctrl-btn ctrl-btn-end" onclick="leaveSession()" title="End Call">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
+            <line x1="23" y1="1" x2="1" y2="23"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+/* ═══════════════════════════════════════════════════════════════
+   Med2AI Nexus — Web Clinician Portal
+   Premium telehealth UI for browser-based consultation join
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --navy: #0f172a;
+  --navy-light: #1e293b;
+  --accent: #00C9FF;
+  --accent-green: #92FE9D;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+}
+
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Screens ────────────────────────────────────────────────── */
+.screen {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+}
+.screen.active { display: flex; }
+
+/* ── JOIN SCREEN ────────────────────────────────────────────── */
+#join-screen {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+  align-items: center;
+  justify-content: center;
+}
+
+.join-container {
+  width: 100%;
+  max-width: 460px;
+  padding: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.brand-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-green));
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 201, 255, 0.3);
+}
+
+.brand-text h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.brand-highlight {
+  background: linear-gradient(90deg, var(--accent), var(--accent-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand-text p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 400;
+}
+
+/* ── Join Card ──────────────────────────────────────────────── */
+.join-card {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+}
+
+.join-card h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.join-card .subtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 8px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+
+.input-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 201, 255, 0.2);
+}
+
+#room-code {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+}
+
+/* ── Button ─────────────────────────────────────────────────── */
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--accent), #0077B6);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(0, 201, 255, 0.3);
+  margin-top: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(0, 201, 255, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Badges ─────────────────────────────────────────────────── */
+.badges {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge-green {
+  background: rgba(146, 254, 157, 0.12);
+  color: var(--accent-green);
+  border: 1px solid rgba(146, 254, 157, 0.25);
+}
+
+.badge-purple {
+  background: rgba(155, 89, 182, 0.12);
+  color: #b57edc;
+  border: 1px solid rgba(155, 89, 182, 0.25);
+}
+
+.badge-blue {
+  background: rgba(0, 201, 255, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(0, 201, 255, 0.25);
+}
+
+.footer-text {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  margin-top: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CALL SCREEN
+   ═══════════════════════════════════════════════════════════════ */
+#call-screen {
+  background: #000;
+  position: relative;
+  flex-direction: column;
+}
+
+.call-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ── Video ───────────────────────────────────────────────────── */
+.video-main {
+  width: 100%;
+  height: 100%;
+  background: #111;
+  position: relative;
+}
+
+.video-main video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(255,255,255,0.4);
+}
+
+.placeholder-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.video-placeholder p {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.room-code-badge {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  padding: 8px 20px;
+  background: rgba(0, 201, 255, 0.15);
+  border: 1px solid rgba(0, 201, 255, 0.3);
+  border-radius: 12px;
+  color: var(--accent);
+  margin-top: 8px;
+}
+
+.video-self {
+  position: absolute;
+  bottom: 100px;
+  right: 20px;
+  width: 200px;
+  height: 150px;
+  background: #222;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.video-self video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* ── Call Info Bar ───────────────────────────────────────────── */
+.call-info-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+  z-index: 20;
+}
+
+.call-info-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.call-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: #92FE9D;
+}
+
+.call-timer {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+}
+
+.room-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+}
+
+.room-label strong {
+  color: var(--accent);
+  font-family: 'Roboto Mono', monospace;
+  letter-spacing: 3px;
+}
+
+/* ── Controls ───────────────────────────────────────────────── */
+.call-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  z-index: 20;
+}
+
+.ctrl-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.ctrl-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.05);
+}
+
+.ctrl-btn.muted {
+  background: rgba(255, 59, 48, 0.25);
+}
+
+.ctrl-btn-end {
+  background: #ff3b30;
+  width: 64px;
+  height: 64px;
+}
+
+.ctrl-btn-end:hover {
+  background: #ff4f45;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .join-container { padding: 16px; }
+  .join-card { padding: 24px 20px; }
+  .brand-text h1 { font-size: 22px; }
+  #room-code { font-size: 20px; letter-spacing: 6px; }
+  .video-self { width: 140px; height: 105px; bottom: 90px; right: 12px; }
+  .badges { gap: 6px; }
+  .badge { font-size: 10px; padding: 4px 8px; }
+}
