@@ -76,10 +76,14 @@ async function joinSession() {
     // Generate UID
     const uid = Math.floor(Math.random() * 100000) + 1;
 
-    // Fetch token from token server
+    // Derive channel name — MUST match mobile app convention:
+    // ConsultationService._channelFromCode: 'med2ai-${code.toLowerCase()}'
+    const channelName = `med2ai-${roomCode.toLowerCase()}`;
+
+    // Fetch token from token server using the derived channel name
     let token = '';
     try {
-      const tokenUrl = `${CONFIG.tokenServerUrl}/rtc/${roomCode}/publisher/uid/${uid}/?expiry=3600`;
+      const tokenUrl = `${CONFIG.tokenServerUrl}/rtc/${channelName}/publisher/uid/${uid}/?expiry=3600`;
       const resp = await fetch(tokenUrl);
       if (resp.ok) {
         const data = await resp.json();
@@ -119,8 +123,8 @@ async function joinSession() {
       updateCallStatus('Patient Left', '#ff9f43');
     });
 
-    // Join channel
-    await client.join(CONFIG.appId, roomCode, token || null, uid);
+    // Join channel — use derived channelName (not raw roomCode)
+    await client.join(CONFIG.appId, channelName, token || null, uid);
 
     // Create and publish local tracks
     [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
