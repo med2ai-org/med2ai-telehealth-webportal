@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: med2ai-portal
+    name: med2ai-telehealth-webportal
     runtime: static
     buildCommand: ""
     staticPublishPath: .
