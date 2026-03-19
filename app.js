@@ -43,6 +43,51 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// TOKEN FETCHING (with retry for Render cold starts)
+// ═══════════════════════════════════════════════════════════════
+async function fetchTokenWithRetry(channelName, uid, maxRetries = 3) {
+  const joinBtn = document.getElementById('join-btn');
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const tokenUrl = `${CONFIG.tokenServerUrl}/rtc/${channelName}/publisher/uid/${uid}/?expiry=3600`;
+      console.log(`Token fetch attempt ${attempt}/${maxRetries}: ${tokenUrl}`);
+
+      if (attempt > 1) {
+        joinBtn.innerHTML = `
+          <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+          Waking token server (attempt ${attempt}/${maxRetries})...
+        `;
+      }
+
+      const resp = await fetch(tokenUrl, { signal: AbortSignal.timeout(15000) });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        const token = data.rtcToken || data.token || '';
+        if (token) {
+          console.log('Token obtained successfully');
+          return token;
+        }
+      }
+      console.warn(`Token attempt ${attempt} failed: status ${resp.status}`);
+    } catch (e) {
+      console.warn(`Token attempt ${attempt} error:`, e.message);
+    }
+
+    // Wait before retry (Render free tier can take 30-50s to cold start)
+    if (attempt < maxRetries) {
+      const delayMs = attempt * 3000; // 3s, 6s
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+
+  return null; // All retries exhausted
+}
+
+// ═══════════════════════════════════════════════════════════════
 // JOIN SESSION
 // ═══════════════════════════════════════════════════════════════
 async function joinSession() {
@@ -80,17 +125,10 @@ async function joinSession() {
     // ConsultationService._channelFromCode: 'med2ai-${code.toLowerCase()}'
     const channelName = `med2ai-${roomCode.toLowerCase()}`;
 
-    // Fetch token from token server using the derived channel name
-    let token = '';
-    try {
-      const tokenUrl = `${CONFIG.tokenServerUrl}/rtc/${channelName}/publisher/uid/${uid}/?expiry=3600`;
-      const resp = await fetch(tokenUrl);
-      if (resp.ok) {
-        const data = await resp.json();
-        token = data.rtcToken || data.token || '';
-      }
-    } catch (e) {
-      console.warn('Token server unavailable, joining without token:', e);
+    // Fetch token — REQUIRED (App Certificate is enabled, so token auth is mandatory)
+    const token = await fetchTokenWithRetry(channelName, uid);
+    if (!token) {
+      throw new Error('Could not obtain authentication token. The token server may be starting up — please try again in 30 seconds.');
     }
 
     // Subscribe to remote user events
