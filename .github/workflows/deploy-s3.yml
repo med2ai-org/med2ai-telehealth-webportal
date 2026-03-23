@@ -11,12 +11,21 @@ on:
   workflow_dispatch:
     inputs:
       group:
-        description: 'Target Group (GitHub Environment)'
+        description: 'Target Group (Security & AWS Account)'
         required: true
         default: 'live'
         type: choice
         options:
           - live
+          - dev
+          - mgmt
+      environment:
+        description: 'Target Environment (Resource Prefix)'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
           - dev
 
 permissions:
@@ -24,7 +33,24 @@ permissions:
   contents: read  # Required for actions/checkout
 
 jobs:
+  workflow_summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📝 Generate Runtime Summary
+        run: |
+          echo "## 🚀 Build Parameters Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Target Group** | `${{ github.event.inputs.group }}` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Target Prefix (Env)** | `${{ github.event.inputs.environment }}` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Repository** | `med2ai-telehealth-webportal` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit SHA** | `${{ github.sha }}` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **OIDC Auth** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
+
   deploy:
+    name: Deploy
+    needs: workflow_summary
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.group }}
     steps:
@@ -38,14 +64,10 @@ jobs:
           
       - name: Deploy to S3
         run: |
-          aws s3 sync . s3://med2ai-${{ github.event.inputs.group }}-nexus-tele-portal \
-            --delete \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude "README.md"
+          aws s3 sync . s3://med2ai-${{ github.event.inputs.environment }}-nexus-tele-portal --delete --exclude ".git*" --exclude ".github*"
           
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID_TELEHEALTH }} \
+            --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID_TELE }} \
             --paths "/*"
