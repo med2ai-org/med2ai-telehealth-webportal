@@ -1,36 +1,44 @@
-# Med2AI Nexus — Web Clinician Portal
+# Med2AI Telehealth Portal (Provider Connectivity) 🏥📹
 
-A browser-based telehealth portal that lets clinicians join Med2AI video consultations from **any device** without installing the app.
+Welcome to the **Telehealth Portal**, the secure video connectivity bridge for the Med2AI Nexus Suite.
 
-## Features
-- 🔐 HIPAA-compliant, end-to-end encrypted via Agora RTC
-- 📹 Full video/audio calling with mic and camera controls
-- 🔗 Room code auto-fill from URL params (`?code=ABC123`)
-- 🩺 Premium dark medical UI with glassmorphism
-- 📱 Responsive design (desktop + mobile browsers)
+---
 
-## Architecture
-```
-Patient (Mobile App)  ←→  Agora Cloud  ←→  Provider (Web Browser)
-         ↓                                        ↓
-    Token Server (https://med2ai-agora-token.onrender.com)
-```
+## 📑 What is this?
+This is a sleek, lightweight **HTML5/JavaScript** portal designed for quick, secure provider-patient video encounters. It is optimized for:
+- **Zero-Install Video**: Runs directly in any modern browser.
+- **Secure Encounters**: Encrypted peer-to-peer or TURN-based video streaming.
+- **Integration**: Designed to be popped out from the RPM or DCT portals.
 
-## Quick Start
+---
+
+## 🏗️ Architecture (Nexus Context)
+The Telehealth Portal is a **Static Web App** with minimal build overhead:
+- **Stack**: Vanilla HTML, CSS, and Modern JavaScript.
+- **Hosting**: AWS S3 + CloudFront.
+- **Backend**: Coordinates session signaling via the [Provider API](../med2ai-provider-api).
+
+---
+
+## 🚀 Getting Started
+
+### 1. Local Development
+Since this is a static site, you can just open `index.html` or use any simple static server (like `live-server`).
 ```bash
-# Serve locally
-python -m http.server 9090
-# Open http://localhost:9090
+npx live-server
 ```
 
-## Deploy to Render
-1. Push this repo to GitHub
-2. Go to [render.com](https://render.com) → New → Static Site
-3. Connect your GitHub repo
-4. Set **Publish Directory** to `.` (root)
-5. Deploy → your portal is live at `https://med2ai-portal.onrender.com`
+### 2. Manual Deployment (OIDC)
+1.  Go to the **Actions** tab in GitHub.
+2.  Select **"Deploy Telehealth Portal to S3"**.
+3.  Click **Run workflow** and choose your **Target Group** (`live` or `dev`).
 
-## Configuration
-Edit `app.js` line 8-9 to update:
-- `appId` — Your Agora App ID
-- `tokenServerUrl` — Your Agora token server URL
+---
+
+## 💎 Beginner Tips
+- **No Build Step?** Exactly! This repo stays light for maximum compatibility. GHA just syncs the files directly.
+- **Video Logic**: Look for `main.js` or `video.js` to see how the WebRTC/Signaling works.
+- **Styling**: All CSS is in `styles.css`. We keep it clean and premium.
+
+---
+*Part of the Med2AI Clinical Suite. Managed by Med2AI Terraform.*

@@ -1,0 +1,51 @@
+# 🚀 TELEHEALTH PORTAL DEPLOYMENT WORKFLOW
+# This GitHub Action automates the direct deployment of the Telehealth Static Portal.
+# 
+# DESIGN:
+# 1. NO BUILD STEP: Files are synced directly (HTML/JS/CSS).
+# 2. ENVIRONMENT SELECTOR: Choose 'live' or 'dev' during manual trigger.
+# 3. OIDC AUTH: Uses temporary, secure role assumption instead of static keys.
+
+name: Deploy Telehealth Portal to S3
+on:
+  workflow_dispatch:
+    inputs:
+      group:
+        description: 'Target Group (GitHub Environment)'
+        required: true
+        default: 'live'
+        type: choice
+        options:
+          - live
+          - dev
+
+permissions:
+  id-token: write # Required for OIDC role assumption
+  contents: read  # Required for actions/checkout
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.group }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-1
+          
+      - name: Deploy to S3
+        run: |
+          aws s3 sync . s3://med2ai-${{ github.event.inputs.group }}-nexus-tele-portal \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "README.md"
+          
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID_TELEHEALTH }} \
+            --paths "/*"
