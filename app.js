@@ -4,6 +4,8 @@
    ═══════════════════════════════════════════════════════════════ */
 
 // ── Configuration ────────────────────────────────────────────
+// These placeholders are replaced during the deployment workflow
+// using the GitHub Actions secrets: AGORA_APP_ID and VITE_API_URL.
 const CONFIG = {
   appId: '__VITE_AGORA_APP_ID__',
   tokenServerUrl: '__VITE_API_URL__',
