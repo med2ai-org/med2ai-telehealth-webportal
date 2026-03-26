@@ -61,6 +61,11 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: eu-west-1
+
+      - name: Inject Environment Variables
+        run: |
+          sed -i "s|__VITE_API_URL__|${{ secrets.VITE_API_URL }}|g" app.js
+          sed -i "s|__VITE_AGORA_APP_ID__|${{ secrets.AGORA_APP_ID }}|g" app.js
           
       - name: Deploy to S3
         run: |

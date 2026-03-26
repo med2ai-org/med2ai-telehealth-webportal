@@ -5,8 +5,8 @@
 
 // ── Configuration ────────────────────────────────────────────
 const CONFIG = {
-  appId: 'e3404e73e08d4857b167c17dd11d2755',
-  tokenServerUrl: 'https://med2ai-agora-token.onrender.com',
+  appId: '__VITE_AGORA_APP_ID__',
+  tokenServerUrl: '__VITE_API_URL__',
 };
 
 // ── State ────────────────────────────────────────────────────
