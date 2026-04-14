@@ -8,8 +8,22 @@
 // using the GitHub Actions secrets: AGORA_APP_ID and VITE_API_URL.
 const CONFIG = {
   appId: '__VITE_AGORA_APP_ID__',
-  tokenServerUrl: '__VITE_API_URL__',
+  tokenServerUrl: '/clinical', // Proxied via CloudFront Regulatory Bridge
 };
+
+let AUTH_TOKEN = localStorage.getItem('telehealth_token') || null;
+
+function setToken(t) { AUTH_TOKEN = t; localStorage.setItem('telehealth_token', t); }
+function getToken()  { return AUTH_TOKEN || localStorage.getItem('telehealth_token'); }
+function clearToken(){ AUTH_TOKEN = null; localStorage.removeItem('telehealth_token'); localStorage.removeItem('telehealth_user'); }
+
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(window.atob(base64));
+  } catch (e) { return {}; }
+}
 
 // ── State ────────────────────────────────────────────────────
 let client = null;
@@ -22,6 +36,14 @@ let timerSeconds = 0;
 
 // ── Auto-fill room code from URL ─────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  if (!getToken()) {
+    showScreen('login-screen');
+  } else {
+    const user = JSON.parse(localStorage.getItem('telehealth_user') || '{}');
+    if (user.name) document.getElementById('display-name').value = user.name;
+    showScreen('join-screen');
+  }
+
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code') || params.get('room');
   if (code) {
@@ -47,47 +69,64 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════
 // TOKEN FETCHING (with retry for Render cold starts)
 // ═══════════════════════════════════════════════════════════════
-async function fetchTokenWithRetry(channelName, uid, maxRetries = 3) {
-  const joinBtn = document.getElementById('join-btn');
+async function fetchToken(channelName, uid) {
+  try {
+    const tokenUrl = `${CONFIG.tokenServerUrl}/rtc/${channelName}/publisher/uid/${uid}/?expiry=3600`;
+    console.log(`Fetching RTC token: ${tokenUrl}`);
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const tokenUrl = `${CONFIG.tokenServerUrl}/rtc/${channelName}/publisher/uid/${uid}/?expiry=3600`;
-      console.log(`Token fetch attempt ${attempt}/${maxRetries}: ${tokenUrl}`);
+    const resp = await fetch(tokenUrl, { 
+      headers: { 'Authorization': `Bearer ${getToken()}` },
+      signal: AbortSignal.timeout(10000) 
+    });
 
-      if (attempt > 1) {
-        joinBtn.innerHTML = `
-          <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-          </svg>
-          Waking token server (attempt ${attempt}/${maxRetries})...
-        `;
-      }
-
-      const resp = await fetch(tokenUrl, { signal: AbortSignal.timeout(15000) });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        const token = data.rtcToken || data.token || '';
-        if (token) {
-          console.log('Token obtained successfully');
-          return token;
-        }
-      }
-      console.warn(`Token attempt ${attempt} failed: status ${resp.status}`);
-    } catch (e) {
-      console.warn(`Token attempt ${attempt} error:`, e.message);
+    if (resp.ok) {
+      const data = await resp.json();
+      const token = data.rtcToken || data.token || '';
+      if (token) return token;
     }
-
-    // Wait before retry (Render free tier can take 30-50s to cold start)
-    if (attempt < maxRetries) {
-      const delayMs = attempt * 3000; // 3s, 6s
-      await new Promise(r => setTimeout(r, delayMs));
-    }
+    console.error(`Token fetch failed: status ${resp.status}`);
+    if (resp.status === 401) { clearToken(); location.reload(); }
+  } catch (e) {
+    console.error(`Token fetch error:`, e.message);
   }
-
-  return null; // All retries exhausted
+  return null;
 }
+
+window.doLogin = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn-action');
+  
+  if (!email || !pwd) return;
+  
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+  
+  try {
+    // We call the provider API (proxied) to login
+    const resp = await fetch(`${CONFIG.tokenServerUrl}/api/auth/clinician/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pwd })
+    });
+    
+    const data = await resp.json();
+    if (data.success) {
+      setToken(data.token);
+      const payload = parseJwt(data.token);
+      localStorage.setItem('telehealth_user', JSON.stringify({ name: payload.name || email.split('@')[0], role: (payload['cognito:groups']||[])[0] }));
+      document.getElementById('display-name').value = payload.name || email.split('@')[0];
+      showScreen('join-screen');
+    } else {
+      alert(data.error || 'Login failed');
+    }
+  } catch (e) {
+    alert('Connection error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════
 // JOIN SESSION
@@ -128,9 +167,9 @@ async function joinSession() {
     const channelName = `med2ai-${roomCode.toLowerCase()}`;
 
     // Fetch token — REQUIRED (App Certificate is enabled, so token auth is mandatory)
-    const token = await fetchTokenWithRetry(channelName, uid);
+    const token = await fetchToken(channelName, uid);
     if (!token) {
-      throw new Error('Could not obtain authentication token. The token server may be starting up — please try again in 30 seconds.');
+      throw new Error('Could not obtain authentication token. Please check the server configuration.');
     }
 
     // Subscribe to remote user events

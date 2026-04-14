@@ -12,6 +12,49 @@
 </head>
 <body>
   <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LOGIN SCREEN                                            -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div id="login-screen" class="screen">
+    <div class="join-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Med2AI <span class="brand-highlight">Nexus</span></h1>
+          <p>Clinical Authentication</p>
+        </div>
+      </div>
+
+      <div class="join-card">
+        <h2>Clinician Sign In</h2>
+        <p class="subtitle">Access secure telehealth sessions using your Med2AI credentials.</p>
+
+        <div class="input-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" placeholder="clinician@hospital.com" autocomplete="email">
+        </div>
+
+        <div class="input-group" style="position: relative;">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••">
+        </div>
+
+        <button id="login-btn-action" class="btn-primary" onclick="doLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/>
+          </svg>
+          Sign In
+        </button>
+      </div>
+
+      <p class="footer-text">Protected by AWS Cognito · NIST 800-63 Compliant</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
   <!-- JOIN SCREEN                                             -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <div id="join-screen" class="screen active">
