@@ -13,6 +13,92 @@ const CONFIG = {
 
 let AUTH_TOKEN = localStorage.getItem('telehealth_token') || null;
 
+const TELEHEALTH_ROLE_POLICY = {
+  'med2ai:sysadmin': { joinCall: true, privileged: true, admin: true },
+  'med2ai:pi': { joinCall: true, privileged: true, admin: false },
+  'med2ai:care-manager': { joinCall: true, privileged: false, admin: false },
+  'med2ai:coordinator': { joinCall: true, privileged: false, admin: false },
+  'med2ai:sponsor': { joinCall: true, privileged: false, admin: false },
+  // Staff is deliberately allowed into calls so non-clinical personnel can
+  // support operational workflows without inheriting broader RPM or DCT access.
+  'med2ai:staff': { joinCall: true, privileged: false, admin: false },
+};
+
+function normalizeRole(role) {
+  const value = (role || '').trim().toLowerCase();
+  const aliases = {
+    'med2ai:sysadmin': 'med2ai:sysadmin',
+    sysadmin: 'med2ai:sysadmin',
+    admin: 'med2ai:sysadmin',
+    'med2ai:pi': 'med2ai:pi',
+    pi: 'med2ai:pi',
+    'principal-investigator': 'med2ai:pi',
+    'med2ai:care-manager': 'med2ai:care-manager',
+    'care-manager': 'med2ai:care-manager',
+    'care_manager': 'med2ai:care-manager',
+    'med2ai:coordinator': 'med2ai:coordinator',
+    coordinator: 'med2ai:coordinator',
+    'med2ai:sponsor': 'med2ai:sponsor',
+    sponsor: 'med2ai:sponsor',
+    'med2ai:staff': 'med2ai:staff',
+    staff: 'med2ai:staff',
+  };
+  return aliases[value] || null;
+}
+
+function getEffectiveRole(rawRole) {
+  return normalizeRole(rawRole) || 'med2ai:staff';
+}
+
+function getTelehealthPermissions(rawRole) {
+  return TELEHEALTH_ROLE_POLICY[getEffectiveRole(rawRole)] || TELEHEALTH_ROLE_POLICY['med2ai:staff'];
+}
+
+function updateTelehealthRoleNote(rawRole) {
+  const roleNote = document.getElementById('role-access-note');
+  if (!roleNote) return;
+
+  if (getEffectiveRole(rawRole) === 'med2ai:staff') {
+    roleNote.textContent = 'Staff access is limited to secure telehealth sessions only.';
+    roleNote.style.display = 'block';
+    return;
+  }
+
+  roleNote.textContent = '';
+  roleNote.style.display = 'none';
+}
+
+function storeTelehealthUserSession(name, rawRole) {
+  const role = getEffectiveRole(rawRole);
+  const permissions = getTelehealthPermissions(role);
+  const session = { name, role, permissions };
+  localStorage.setItem('telehealth_user', JSON.stringify(session));
+  return session;
+}
+
+function getTelehealthUser() {
+  const saved = JSON.parse(localStorage.getItem('telehealth_user') || '{}');
+  const role = getEffectiveRole(saved.role);
+  return { ...saved, role, permissions: getTelehealthPermissions(role) };
+}
+
+function enforceTelehealthRBAC(rawRole) {
+  const role = getEffectiveRole(rawRole);
+  const permissions = getTelehealthPermissions(role);
+
+  // Telehealth is the one portal where the lowest-privilege staff role is
+  // expected to be functional today, so only unsupported identities are blocked.
+  if (!permissions.joinCall) {
+    clearToken();
+    localStorage.removeItem('telehealth_user');
+    alert(`Role ${role} is not permitted to join telehealth sessions.`);
+    showScreen('login-screen');
+    return false;
+  }
+
+  return true;
+}
+
 function setToken(t) { AUTH_TOKEN = t; localStorage.setItem('telehealth_token', t); }
 function getToken()  { return AUTH_TOKEN || localStorage.getItem('telehealth_token'); }
 function clearToken(){ AUTH_TOKEN = null; localStorage.removeItem('telehealth_token'); localStorage.removeItem('telehealth_user'); }
@@ -39,8 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!getToken()) {
     showScreen('login-screen');
   } else {
-    const user = JSON.parse(localStorage.getItem('telehealth_user') || '{}');
+    const user = getTelehealthUser();
+    if (!enforceTelehealthRBAC(user.role)) return;
     if (user.name) document.getElementById('display-name').value = user.name;
+    updateTelehealthRoleNote(user.role);
     showScreen('join-screen');
   }
 
@@ -114,8 +202,10 @@ window.doLogin = async () => {
     if (data.success) {
       setToken(data.token);
       const payload = parseJwt(data.token);
-      localStorage.setItem('telehealth_user', JSON.stringify({ name: payload.name || email.split('@')[0], role: (payload['cognito:groups']||[])[0] }));
-      document.getElementById('display-name').value = payload.name || email.split('@')[0];
+      const session = storeTelehealthUserSession(payload.name || email.split('@')[0], (payload['cognito:groups']||[])[0]);
+      if (!enforceTelehealthRBAC(session.role)) return;
+      document.getElementById('display-name').value = session.name;
+      updateTelehealthRoleNote(session.role);
       showScreen('join-screen');
     } else {
       alert(data.error || 'Login failed');
@@ -132,6 +222,9 @@ window.doLogin = async () => {
 // JOIN SESSION
 // ═══════════════════════════════════════════════════════════════
 async function joinSession() {
+  const user = getTelehealthUser();
+  if (!enforceTelehealthRBAC(user.role)) return;
+
   const codeInput = document.getElementById('room-code');
   const nameInput = document.getElementById('display-name');
   const joinBtn = document.getElementById('join-btn');
